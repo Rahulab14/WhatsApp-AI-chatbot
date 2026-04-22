@@ -37,7 +37,11 @@ function getSession(userId) {
 }
 
 function checkStaticIntents(message) {
-    const text = message.toLowerCase();
+    const text = message.toLowerCase().trim();
+
+    if (text === "ai-academy") {
+        return "Thank you for reaching out to the AI Academy! How can I help you today?";
+    }
     
     if (text.includes("price") || text.includes("fees") || text.includes("cost") || text.includes("fee")) {
         return "The fee for the AI Academy course varies based on your region. Please let me know your location or respond with 'Enroll' to register and an advisor will contact you with exact details.";
@@ -68,7 +72,7 @@ export async function processMessage(userId, message) {
             return "Systems are currently down. Please reach out to an advisor.";
         }
         
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction: SYSTEM_PROMPT });
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
         const chatHistory = session.history.map(msg => ({
             role: msg.role === 'user' ? 'user' : 'model',
@@ -83,7 +87,8 @@ export async function processMessage(userId, message) {
             }
         });
 
-        const result = await chat.sendMessage(message);
+        const promptWithContext = `Instruction: ${SYSTEM_PROMPT}\n\nUser: ${message}`;
+        const result = await chat.sendMessage(promptWithContext);
         const textResponse = result.response.text();
 
         session.history.push({ role: 'user', content: message });
