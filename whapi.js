@@ -9,21 +9,13 @@ if (!WHAPI_TOKEN) {
     console.warn("WARNING: WHAPI_TOKEN is not set in environment variables.");
 }
 
-/**
- * Validates the WhatsApp number format.
- */
 function isValidNumber(phone) {
-    // Basic validation to ensure it looks like a number
-    // We strip non-digits. A WhatsApp ID usually looks like 1234567890@s.whatsapp.net
     if (phone.includes('@s.whatsapp.net')) {
         return true;
     }
     return /^\d{10,15}$/.test(phone.replace(/\D/g, ''));
 }
 
-/**
- * Sends a message via Whapi.
- */
 export async function sendMessage(to, body) {
     if (!isValidNumber(to)) {
         console.error(`Invalid WhatsApp number format: ${to}`);

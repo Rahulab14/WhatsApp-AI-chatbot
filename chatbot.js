@@ -10,7 +10,6 @@ if (!GEMINI_API_KEY) {
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
-// In-memory session tracking
 const sessions = {};
 
 const COURSE_INFO = process.env.COURSE_INFO || "We do not have course details currently.";
@@ -27,9 +26,6 @@ Guidelines:
 - Reply in the same language the user initiates with.
 `;
 
-/**
- * Initialize or retrieve a session.
- */
 function getSession(userId) {
     if (!sessions[userId]) {
         sessions[userId] = {
@@ -40,9 +36,6 @@ function getSession(userId) {
     return sessions[userId];
 }
 
-/**
- * Handles intent routing to bypass LLM for static queries.
- */
 function checkStaticIntents(message) {
     const text = message.toLowerCase();
     
@@ -61,29 +54,22 @@ function checkStaticIntents(message) {
     return null;
 }
 
-/**
- * Core function to process incoming messages.
- */
 export async function processMessage(userId, message) {
     try {
         const session = getSession(userId);
         session.lastInteraction = Date.now();
 
-        // 1. Check for basic static intents
         const staticResponse = checkStaticIntents(message);
         if (staticResponse) {
             return staticResponse;
         }
 
-        // 2. Use Gemini for conversational queries
-        // Make sure we have a key
         if (!GEMINI_API_KEY) {
             return "Systems are currently down. Please reach out to an advisor.";
         }
         
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction: SYSTEM_PROMPT });
 
-        // Format history for Gemini API
         const chatHistory = session.history.map(msg => ({
             role: msg.role === 'user' ? 'user' : 'model',
             parts: [{ text: msg.content }]
@@ -93,14 +79,13 @@ export async function processMessage(userId, message) {
             history: chatHistory,
             generationConfig: {
                 maxOutputTokens: 150,
-                temperature: 0.2, // Low temperature for factual responses
+                temperature: 0.2,
             }
         });
 
         const result = await chat.sendMessage(message);
         const textResponse = result.response.text();
 
-        // Save to history (keep only the last 10 interactions)
         session.history.push({ role: 'user', content: message });
         session.history.push({ role: 'bot', content: textResponse });
         
